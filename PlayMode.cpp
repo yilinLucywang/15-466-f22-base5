@@ -15,13 +15,13 @@
 
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
+	MeshBuffer const *ret = new MeshBuffer(data_path("game5tttt.pnct"));
 	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	return new Scene(data_path("game5tttt.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
@@ -39,12 +39,27 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
+	WalkMeshes *ret = new WalkMeshes(data_path("game5tttt.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
 });
 
 PlayMode::PlayMode() : scene(*phonebank_scene) {
+
+	for (auto &transform : scene.transforms) {
+		if(transform.name == "star"){
+			star0 = &transform;
+		}
+		if(transform.name == "star1"){
+			star1 = &transform;
+		}
+		if(transform.name == "star2"){
+			star2 = &transform;
+		}
+	}
+	star_vector.push_back(star0);
+	star_vector.push_back(star1);
+	star_vector.push_back(star2);
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
@@ -58,7 +73,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	player.camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
-	player.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
+	player.camera->transform->position = glm::vec3(0.0f, 0.0f, 2.7f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
 	player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -136,11 +151,25 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
+int PlayMode::collision_box(){
+	for(int i = 0; i < star_vector.size(); i++){
+		float x_s = (star_vector[i]->position.x - player.transform->position.x) * (star_vector[i]->position.x - player.transform->position.x);
+		float y_s = (star_vector[i]->position.y - player.transform->position.y) * (star_vector[i]->position.y - player.transform->position.y);
+		float z_s = (star_vector[i]->position.z - player.transform->position.z) * (star_vector[i]->position.z - player.transform->position.z);
+		float dist = sqrt(x_s + y_s + z_s);
+		//std::cout << dist << std::endl;
+		if(dist <= 2.0f){
+			return i; 
+		}
+	}
+	return -1; 
+}
+
 void PlayMode::update(float elapsed) {
 	//player walking:
 	{
 		//combine inputs into a move:
-		constexpr float PlayerSpeed = 3.0f;
+		constexpr float PlayerSpeed = 0.5f;
 		glm::vec2 move = glm::vec2(0.0f);
 		if (left.pressed && !right.pressed) move.x =-1.0f;
 		if (!left.pressed && right.pressed) move.x = 1.0f;
@@ -159,6 +188,8 @@ void PlayMode::update(float elapsed) {
 			if (remain == glm::vec3(0.0f)) break;
 			WalkPoint end;
 			float time;
+
+			std::cout<<player.at.indices.x<<std::endl;
 			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
 			player.at = end;
 			if (time == 1.0f) {
@@ -202,7 +233,16 @@ void PlayMode::update(float elapsed) {
 
 		//update player's position to respect walking:
 		player.transform->position = walkmesh->to_world_point(player.at);
+		//TODO: if player fall
 
+		int star_idx = collision_box();
+		if(star_idx != -1){
+			star_vector[star_idx]->position = glm::vec3(10000.0f, 10000.0f, 100000.f);
+			score = score + 1;
+		}
+		//move star away
+
+		//TODO: calculate distance between player and stars
 		{ //update player's rotation to respect local (smooth) up-vector:
 			
 			glm::quat adjust = glm::rotation(
@@ -273,12 +313,12 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		));
 
 		constexpr float H = 0.09f;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse; try to collect as many stars as possible",
 			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
 		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+		lines.draw_text("SCORE:" + std::to_string(score),
 			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));

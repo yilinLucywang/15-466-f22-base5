@@ -36,4 +36,11 @@ struct PlayMode : Mode {
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
 	} player;
+
+	int score = 0;
+	int collision_box();
+	Scene::Transform *star0 = nullptr;
+	Scene::Transform *star1 = nullptr;
+	Scene::Transform *star2 = nullptr;
+	std::vector<Scene::Transform*> star_vector = {};
 };

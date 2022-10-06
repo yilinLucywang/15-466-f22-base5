@@ -8,6 +8,7 @@
 #blender --background --python export-meshes.py -- [...see below...]
 
 import sys,re
+import math
 
 args = []
 for i in range(0,len(sys.argv)):
@@ -144,7 +145,27 @@ for obj in bpy.data.objects:
 	#...count will be written below
 
 	colors = None
+	# print("trying to see whether this is correct? ")
+	# print(obj.data.materials)
+	# print(obj.data.materials[0])
+	color0 = obj.data.materials[0].node_tree.nodes["Principled BSDF"].inputs[0].default_value[0]
+	color1 = obj.data.materials[0].node_tree.nodes["Principled BSDF"].inputs[0].default_value[1]
+	color2 = obj.data.materials[0].node_tree.nodes["Principled BSDF"].inputs[0].default_value[2]
+	color3 = obj.data.materials[0].node_tree.nodes["Principled BSDF"].inputs[0].default_value[3]
+	# print(color0)
+	# print(color1)
+	# print(color2)
+	# print(color3)
+	isFromMaterial = False
+	colorArray = []
+	#colors = obj.data.materials["Material.004"].node_tree.nodes["Principled BSDF"].inputs[0].default_value
 	if len(obj.data.vertex_colors) == 0:
+		isFromMaterial = True
+		colorArray.append(color0)
+		colorArray.append(color1)
+		colorArray.append(color2)
+		colorArray.append(color3)
+		#colors = colorString
 		print("WARNING: trying to export color data, but object '" + name + "' does not have color data; will output 0xffffffff")
 	else:
 		colors = obj.data.vertex_colors.active.data
@@ -176,7 +197,9 @@ for obj in bpy.data.objects:
 				col = colors[poly.loop_indices[i]].color
 				local_data += struct.pack('BBBB', int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), 255)
 			else:
-				local_data += struct.pack('BBBB', 255, 255, 255, 255)
+				col = colorArray
+				local_data += struct.pack('BBBB', int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), 255)
+				#local_data += struct.pack('BBBB', 255, 255, 255, 255)
 			if uvs != None:
 				uv = uvs[poly.loop_indices[i]].uv
 				local_data += struct.pack('ff', uv.x, uv.y)
