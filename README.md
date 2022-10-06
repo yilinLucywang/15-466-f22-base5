@@ -1,8 +1,8 @@
-# (TODO: your game's title)
+# Star Collector
 
-Author: (TODO: your name)
+Author: Yilin Wang
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: You are trying to collect as many star as possible while trying not to fall from the track. 
 
 Screen Shot:
 
@@ -10,9 +10,9 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+Mouse motion looks; WASD moves; escape ungrabs mouse; move close to a star to collect a star. Try to collect as many star as possible.
 
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+Sources: I created my scene by modifying the phone_bank.blend from the original base 5 repository. 
 
 This game was built with [NEST](NEST.md).
 
